@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0-windows</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <UseWPF>true</UseWPF>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Dolly.ImageLoader.Core\Dolly.ImageLoader.Core.csproj" />
+        <ProjectReference Include="..\Dolly.ImageLoader.Infrastructure\Dolly.ImageLoader.Infrastructure.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    </ItemGroup>
+
+</Project>

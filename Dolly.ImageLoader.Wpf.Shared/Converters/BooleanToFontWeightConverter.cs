@@ -1,8 +1,8 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
 
-namespace Dolly.ImageLoader.Wpf.Converters;
+namespace Dolly.ImageLoader.Wpf.Shared.Converters;
 
 public sealed class BooleanToFontWeightConverter : IValueConverter
 {

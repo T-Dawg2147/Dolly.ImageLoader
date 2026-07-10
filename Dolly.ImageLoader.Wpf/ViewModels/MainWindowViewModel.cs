@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.IO;
@@ -10,8 +10,7 @@ using Dolly.ImageLoader.Core.Enums;
 using Dolly.ImageLoader.Core.Interfaces;
 using Dolly.ImageLoader.Core.Models;
 using Dolly.ImageLoader.Core.Options;
-using Dolly.ImageLoader.Wpf.Views;
-using Microsoft.Extensions.DependencyInjection;
+using Dolly.ImageLoader.Wpf.Shared.ViewModels;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -24,7 +23,6 @@ public partial class MainWindowViewModel : ObservableObject
     private readonly IBadImageRepository _badImageRepository;
     private readonly ISaveWorkflowService _saveWorkflowService;
     private readonly IImageSlotViewModelFactory _imageSlotViewModelFactory;
-    private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<MainWindowViewModel> _logger;
     private readonly PathOptions _pathOptions;
 
@@ -192,7 +190,6 @@ public partial class MainWindowViewModel : ObservableObject
         ISaveWorkflowService saveWorkflowService,
         IImageSlotViewModelFactory imageSlotViewModelFactory,
         IOptions<PathOptions> pathOptions,
-        IServiceProvider serviceProvider,
         ILogger<MainWindowViewModel> logger)
     {
         _productRepository = productRepository;
@@ -201,20 +198,11 @@ public partial class MainWindowViewModel : ObservableObject
         _saveWorkflowService = saveWorkflowService;
         _imageSlotViewModelFactory = imageSlotViewModelFactory;
         _pathOptions = pathOptions.Value;
-        _serviceProvider = serviceProvider;
         _logger = logger;
 
         SecondarySlots.CollectionChanged += SecondarySlotsOnCollectionChanged;
 
         BuildEmptySlots();
-    }
-
-    [RelayCommand]
-    private void OpenBatchLoader()
-    {
-        var window = _serviceProvider.GetRequiredService<BatchLoaderWindow>();
-        window.Owner = Application.Current.MainWindow;
-        window.Show();
     }
 
     [RelayCommand]

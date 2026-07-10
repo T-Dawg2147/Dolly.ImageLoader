@@ -3,6 +3,7 @@ using System.Windows;
 using Dolly.ImageLoader.Core.Interfaces;
 using Dolly.ImageLoader.Infrastructure.Configuration;
 using Dolly.ImageLoader.Infrastructure.Services;
+using Dolly.ImageLoader.Wpf.Shared.ViewModels;
 using Dolly.ImageLoader.Wpf.ViewModels;
 using Dolly.ImageLoader.Wpf.Views;
 using Microsoft.Extensions.Configuration;
@@ -38,9 +39,6 @@ public partial class App : Application
                 services.AddSingleton<IImageSlotViewModelFactory, ImageSlotViewModelFactory>();
                 services.AddSingleton<IImageNormalizationService, ImageNormalizationService>();
                 services.AddSingleton<IWorkingDirectoryCleanupService, WorkingDirectoryCleanupService>();
-
-                services.AddTransient<BatchLoaderViewModel>();
-                services.AddTransient<BatchLoaderWindow>();
 
                 services.AddSingleton<MainWindowViewModel>();
                 services.AddSingleton<MainWindow>();

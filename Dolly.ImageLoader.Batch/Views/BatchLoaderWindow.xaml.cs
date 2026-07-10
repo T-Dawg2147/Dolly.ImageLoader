@@ -1,11 +1,12 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using Dolly.ImageLoader.Wpf.ViewModels;
+using Dolly.ImageLoader.Batch.ViewModels;
+using Dolly.ImageLoader.Wpf.Shared.ViewModels;
 
-namespace Dolly.ImageLoader.Wpf.Views;
+namespace Dolly.ImageLoader.Batch.Views;
 
 public partial class BatchLoaderWindow : Window
 {
