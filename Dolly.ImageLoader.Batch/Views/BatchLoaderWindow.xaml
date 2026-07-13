@@ -1,10 +1,11 @@
-﻿<Window x:Class="Dolly.ImageLoader.Wpf.Views.BatchLoaderWindow"
+﻿<Window x:Class="Dolly.ImageLoader.Batch.Views.BatchLoaderWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:viewModels="clr-namespace:Dolly.ImageLoader.Wpf.ViewModels"
-        xmlns:views="clr-namespace:Dolly.ImageLoader.Wpf.Views"
+        xmlns:viewModels="clr-namespace:Dolly.ImageLoader.Batch.ViewModels"
+        xmlns:sharedViewModels="clr-namespace:Dolly.ImageLoader.Wpf.Shared.ViewModels;assembly=Dolly.ImageLoader.Wpf.Shared"
+        xmlns:views="clr-namespace:Dolly.ImageLoader.Wpf.Shared.Views;assembly=Dolly.ImageLoader.Wpf.Shared"
         mc:Ignorable="d"
         Title="Dolly Batch Loader"
         Height="860"
@@ -218,7 +219,7 @@
                         <ContentControl Grid.Column="0"
                                         Content="{Binding SelectedPrimarySlot}">
                             <ContentControl.ContentTemplate>
-                                <DataTemplate DataType="{x:Type viewModels:ImageSlotViewModel}">
+                                <DataTemplate DataType="{x:Type sharedViewModels:ImageSlotViewModel}">
                                     <Border BorderThickness="2"
                                             BorderBrush="Transparent"
                                             CornerRadius="6"
@@ -242,7 +243,7 @@
                             </ItemsControl.ItemsPanel>
 
                             <ItemsControl.ItemTemplate>
-                                <DataTemplate DataType="{x:Type viewModels:ImageSlotViewModel}">
+                                <DataTemplate DataType="{x:Type sharedViewModels:ImageSlotViewModel}">
                                     <Border Margin="2"
                                             BorderThickness="2"
                                             BorderBrush="Transparent"

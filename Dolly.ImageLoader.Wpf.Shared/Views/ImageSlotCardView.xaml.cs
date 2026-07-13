@@ -1,6 +1,6 @@
-﻿using System.Windows.Controls;
+using System.Windows.Controls;
 
-namespace Dolly.ImageLoader.Wpf.Views;
+namespace Dolly.ImageLoader.Wpf.Shared.Views;
 
 public partial class ImageSlotCardView : UserControl
 {

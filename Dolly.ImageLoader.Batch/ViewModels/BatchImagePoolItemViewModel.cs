@@ -1,8 +1,8 @@
-﻿using System.IO;
+using System.IO;
 using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace Dolly.ImageLoader.Wpf.ViewModels;
+namespace Dolly.ImageLoader.Batch.ViewModels;
 
 public partial class BatchImagePoolItemViewModel : ObservableObject
 {

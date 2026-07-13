@@ -1,8 +1,8 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Dolly.ImageLoader.Core.Models;
 
-namespace Dolly.ImageLoader.Wpf.ViewModels;
+namespace Dolly.ImageLoader.Batch.ViewModels;
 
 public partial class BatchProductNodeViewModel : ObservableObject
 {

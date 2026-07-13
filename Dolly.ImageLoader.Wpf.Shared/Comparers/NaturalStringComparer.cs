@@ -1,14 +1,14 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Runtime.InteropServices;
 
-namespace Dolly.ImageLoader.Wpf.Comparers;
+namespace Dolly.ImageLoader.Wpf.Shared.Comparers;
 
 public sealed class NaturalStringComparer : IComparer<string>, IComparer
 {
     public static NaturalStringComparer Instance { get; } = new();
-    
+
     private NaturalStringComparer()
-    {}
+    { }
 
     [DllImport("shlwapi.dll", CharSet = CharSet.Unicode)]
     private static extern int StrCmpLogicalW(string x, string y);

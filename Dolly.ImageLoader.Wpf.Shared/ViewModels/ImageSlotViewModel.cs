@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.IO;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -9,7 +9,7 @@ using Dolly.ImageLoader.Core.Interfaces;
 using Dolly.ImageLoader.Core.Models;
 using Microsoft.Win32;
 
-namespace Dolly.ImageLoader.Wpf.ViewModels;
+namespace Dolly.ImageLoader.Wpf.Shared.ViewModels;
 
 public partial class ImageSlotViewModel : ObservableObject
 {
