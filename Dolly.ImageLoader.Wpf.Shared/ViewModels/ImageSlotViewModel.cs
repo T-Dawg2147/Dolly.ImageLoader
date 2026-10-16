@@ -183,36 +183,22 @@ public partial class ImageSlotViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanClear))]
     private void ClearImage()
     {
-        HasValidationError = false;
-        ValidationMessage = null;
-
-        PendingSourceFilePath = null;
-        PendingAction = PendingActionType.Clear;
-
-        ClearImageCommand.NotifyCanExecuteChanged();
-        RevertImageCommand.NotifyCanExecuteChanged();
+        ResetPendingState(PendingActionType.Clear);
     }
 
     [RelayCommand(CanExecute = nameof(CanRevert))]
     private void RevertImage()
     {
-        HasValidationError = false;
-        ValidationMessage = null;
-
-        PendingSourceFilePath = null;
-        PendingAction = PendingActionType.None;
-
-        ClearImageCommand.NotifyCanExecuteChanged();
-        RevertImageCommand.NotifyCanExecuteChanged();
+        ResetPendingState(PendingActionType.None);
     }
 
-    public void ResetPendingState()
+    private void ResetPendingState(PendingActionType actionType)
     {
         HasValidationError = false;
         ValidationMessage = null;
 
         PendingSourceFilePath = null;
-        PendingAction = PendingActionType.None;
+        PendingAction = actionType;
 
         ClearImageCommand.NotifyCanExecuteChanged();
         RevertImageCommand.NotifyCanExecuteChanged();

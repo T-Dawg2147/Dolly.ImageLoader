@@ -12,9 +12,7 @@ public sealed class AssetNamingService : IAssetNamingService
         ImageSlotDefinition slotDefinition,
         ImageImportMetadata importMetadata)
     {
-        var targetId = targetMode == TargetMode.Product
-            ? productContext.ProductId
-            : productContext.ParentGroupId;
+        var targetId = productContext.ProductId;
 
         var suffix = targetMode == TargetMode.Product
             ? slotDefinition.ProductAssetSuffix

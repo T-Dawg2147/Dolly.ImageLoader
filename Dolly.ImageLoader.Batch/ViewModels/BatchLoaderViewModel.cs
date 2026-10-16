@@ -382,6 +382,11 @@ public partial class BatchLoaderViewModel : ObservableObject
                     Username = Environment.UserName
                 };
 
+                // TODO:
+                // Need to re-write this to upload all images at once. 
+                // Currently, this code runs PER Product/Product Group.
+                // This creates an issue where multiple .zip files are created with the EXACT same name
+                // meaning the last item is the only item that pushes images.
                 var result = await _saveWorkflowService.ExecuteAsync(request, CancellationToken.None);
 
                 if (result.Success)
