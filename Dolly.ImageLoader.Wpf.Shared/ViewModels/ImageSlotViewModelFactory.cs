@@ -1,7 +1,7 @@
-﻿using Dolly.ImageLoader.Core.Interfaces;
+using Dolly.ImageLoader.Core.Interfaces;
 using Dolly.ImageLoader.Core.Models;
 
-namespace Dolly.ImageLoader.Wpf.ViewModels;
+namespace Dolly.ImageLoader.Wpf.Shared.ViewModels;
 
 public sealed class ImageSlotViewModelFactory : IImageSlotViewModelFactory
 {

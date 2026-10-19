@@ -61,9 +61,11 @@ public sealed class SaveWorkflowService : ISaveWorkflowService
                 };
             }
 
-            var targetId = request.TargetMode == TargetMode.Product
+            var targetId = request.ProductContext.ProductId;
+            
+            /*var targetId = request.TargetMode == TargetMode.Product
                 ? request.ProductContext.ProductId
-                : request.ProductContext.ParentGroupId;
+                : request.ProductContext.ParentGroupId;*/
 
             var importMetadata = await _imageImportMetadataRepository.GetByTargetIdAsync(targetId, cancellationToken);
             if (importMetadata is null)

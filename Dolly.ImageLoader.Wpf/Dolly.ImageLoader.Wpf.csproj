@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <OutputType>WinExe</OutputType>
@@ -11,6 +11,7 @@
     <ItemGroup>
       <ProjectReference Include="..\Dolly.ImageLoader.Core\Dolly.ImageLoader.Core.csproj" />
       <ProjectReference Include="..\Dolly.ImageLoader.Infrastructure\Dolly.ImageLoader.Infrastructure.csproj" />
+      <ProjectReference Include="..\Dolly.ImageLoader.Wpf.Shared\Dolly.ImageLoader.Wpf.Shared.csproj" />
     </ItemGroup>
 
     <ItemGroup>
@@ -22,14 +23,6 @@
       <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.7" />
       <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.7" />
       <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.7" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Page Update="Views\MainWindow.xaml">
-        <Generator>MSBuild:Compile</Generator>
-        <XamlRuntime>Wpf</XamlRuntime>
-        <SubType>Designer</SubType>
-      </Page>
     </ItemGroup>
 
     <ItemGroup>

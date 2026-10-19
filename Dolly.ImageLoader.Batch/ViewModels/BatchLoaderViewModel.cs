@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Windows;
@@ -9,12 +9,13 @@ using Dolly.ImageLoader.Core.Enums;
 using Dolly.ImageLoader.Core.Interfaces;
 using Dolly.ImageLoader.Core.Models;
 using Dolly.ImageLoader.Core.Options;
-using Dolly.ImageLoader.Wpf.Comparers;
+using Dolly.ImageLoader.Wpf.Shared.Comparers;
+using Dolly.ImageLoader.Wpf.Shared.ViewModels;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Win32;
 
-namespace Dolly.ImageLoader.Wpf.ViewModels;
+namespace Dolly.ImageLoader.Batch.ViewModels;
 
 public partial class BatchLoaderViewModel : ObservableObject
 {
@@ -381,6 +382,11 @@ public partial class BatchLoaderViewModel : ObservableObject
                     Username = Environment.UserName
                 };
 
+                // TODO:
+                // Need to re-write this to upload all images at once. 
+                // Currently, this code runs PER Product/Product Group.
+                // This creates an issue where multiple .zip files are created with the EXACT same name
+                // meaning the last item is the only item that pushes images.
                 var result = await _saveWorkflowService.ExecuteAsync(request, CancellationToken.None);
 
                 if (result.Success)
@@ -1005,7 +1011,7 @@ public partial class BatchLoaderViewModel : ObservableObject
 
     private string? BuildFallbackPreviewUrl(
         ProductContext product,
-        TargetMode targetMode, 
+        TargetMode targetMode,
         ImageSlotDefinition definition)
     {
         var keyStem = ResolveFallbackPreviewKeyStem(product, targetMode);

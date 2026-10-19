@@ -4,7 +4,8 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:viewModels="clr-namespace:Dolly.ImageLoader.Wpf.ViewModels"
-        xmlns:views="clr-namespace:Dolly.ImageLoader.Wpf.Views"
+        xmlns:sharedViewModels="clr-namespace:Dolly.ImageLoader.Wpf.Shared.ViewModels;assembly=Dolly.ImageLoader.Wpf.Shared"
+        xmlns:views="clr-namespace:Dolly.ImageLoader.Wpf.Shared.Views;assembly=Dolly.ImageLoader.Wpf.Shared"
         mc:Ignorable="d"
         Title="Dolly Image Loader"
         Height="880"
@@ -40,8 +41,6 @@
                     <ColumnDefinition Width="90" />
                     <ColumnDefinition Width="10" />
                     <ColumnDefinition Width="90" />
-                    <ColumnDefinition Width="10" />
-                    <ColumnDefinition Width="110" />
                     <ColumnDefinition Width="10" />
                     <ColumnDefinition Width="140" />
                 </Grid.ColumnDefinitions>
@@ -163,11 +162,6 @@
 
                 <Button Grid.Column="8"
                         Height="32"
-                        Content="Batch Loader"
-                        Command="{Binding OpenBatchLoaderCommand}" />
-
-                <Button Grid.Column="10"
-                        Height="32"
                         Content="Save Changes"
                         FontWeight="SemiBold"
                         Command="{Binding SaveChangesCommand}"
@@ -243,7 +237,7 @@
             <ContentControl Grid.Column="0"
                             Content="{Binding PrimarySlot}">
                 <ContentControl.ContentTemplate>
-                    <DataTemplate DataType="{x:Type viewModels:ImageSlotViewModel}">
+                    <DataTemplate DataType="{x:Type sharedViewModels:ImageSlotViewModel}">
                         <views:ImageSlotCardView />
                     </DataTemplate>
                 </ContentControl.ContentTemplate>
@@ -258,7 +252,7 @@
                     </ItemsControl.ItemsPanel>
 
                 <ItemsControl.ItemTemplate>
-                    <DataTemplate DataType="{x:Type viewModels:ImageSlotViewModel}">
+                    <DataTemplate DataType="{x:Type sharedViewModels:ImageSlotViewModel}">
                         <views:ImageSlotCardView />
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>

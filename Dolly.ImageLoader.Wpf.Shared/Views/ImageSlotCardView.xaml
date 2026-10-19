@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="Dolly.ImageLoader.Wpf.Views.ImageSlotCardView"
+<UserControl x:Class="Dolly.ImageLoader.Wpf.Shared.Views.ImageSlotCardView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              MinHeight="210"

@@ -62,10 +62,11 @@ public sealed class ProductRepository : IProductRepository
                            FROM [Catalogue].[Products] AS P
                            WHERE P.[Id] LIKE @search
                               OR P.[Name] LIKE @search
+                              OR P.[ParentId] LIKE @search
                               OR P.[Base_Code] LIKE @search
                               OR P.[Supplier_Product_Code] LIKE @search
                            ORDER BY
-                               CASE WHEN P.[Id] = @exact THEN 0 ELSE 1 END,
+                               CASE WHEN P.[Id] = @exact OR P.[Parent_ID] = @exact THEN 0 ELSE 1 END,
                                P.[Id];
                            """;
 
