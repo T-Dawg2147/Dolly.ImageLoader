@@ -60,6 +60,7 @@
                 </StackPanel>
 
                 <TextBox Grid.Column="2"
+                         x:Name="GroupSearchTextBox"
                          Height="30"
                          VerticalContentAlignment="Center"
                          Padding="10,0"
@@ -68,6 +69,7 @@
                          KeyDown="GroupSearchTextBox_KeyDown"/>
 
                 <Button Grid.Column="4"
+                        x:Name="LoadGroupButton"
                         Height="30"
                         Content="Load Group"
                         Command="{Binding LoadGroupCommand}" />

@@ -18,6 +18,16 @@ public partial class BatchLoaderWindow : Window
         DataContext = viewModel;
         Closing += BatchLoaderWindow_Closing;
 
+        viewModel.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(BatchLoaderViewModel.IsGroupPassThrough))
+            {
+                var visibility = viewModel.IsGroupPassThrough ? Visibility.Collapsed : Visibility.Visible;
+                GroupSearchTextBox.Visibility = visibility;
+                LoadGroupButton.Visibility = visibility;
+            }
+        };
+
         if (viewModel is INotifyPropertyChanged inpc)
         {
             inpc.PropertyChanged += ViewModel_PropertyChanged;

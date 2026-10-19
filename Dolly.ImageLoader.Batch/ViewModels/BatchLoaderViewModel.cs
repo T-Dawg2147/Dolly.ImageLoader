@@ -36,6 +36,9 @@ public partial class BatchLoaderViewModel : ObservableObject
     private string _groupSearchText = string.Empty;
 
     [ObservableProperty]
+    private bool _isGroupPassThrough;
+
+    [ObservableProperty]
     private bool _isBusy;
 
     partial void OnIsBusyChanged(bool value)
@@ -122,6 +125,23 @@ public partial class BatchLoaderViewModel : ObservableObject
     public int PendingTargetCount => _sessions.Values.Count(x => x.HasPendingChanges);
 
     public bool HasUnsavedChanges => PendingTargetCount > 0;
+
+    /// <summary>True once any save succeeded this session; never cleared by saving.</summary>
+    public bool ChangesSavedThisSession { get; private set; }
+
+    /// <summary>True if the user closed the window and discarded unsaved changes.</summary>
+    public bool ClosedWithDiscardedChanges { get; private set; }
+
+    /// <summary>True if the supplied group could not be loaded.</summary>
+    public bool GroupLoadFailed { get; private set; }
+
+    public async Task InitializeForGroupAsync(string groupId)
+    {
+        IsGroupPassThrough = true;
+        GroupSearchText = groupId;
+        await LoadGroupAsync();
+        GroupLoadFailed = ProductTree.Count == 0;
+    }
 
     public bool CanSaveAll => !IsBusy && PendingTargetCount > 0;
 
@@ -392,6 +412,7 @@ public partial class BatchLoaderViewModel : ObservableObject
                 if (result.Success)
                 {
                     successCount++;
+                    ChangesSavedThisSession = true;
 
                     var refreshedSession = await ReloadTargetSessionAsync(session);
 
@@ -455,7 +476,8 @@ public partial class BatchLoaderViewModel : ObservableObject
             MessageBoxButton.YesNo,
             MessageBoxImage.Warning);
 
-        return result == MessageBoxResult.Yes;
+        ClosedWithDiscardedChanges = result == MessageBoxResult.Yes;
+        return ClosedWithDiscardedChanges;
     }
 
     public async Task AddImageFilesAsync(IEnumerable<string> filePaths)
