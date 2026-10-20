@@ -46,11 +46,11 @@ public sealed class ImageImportMetadataRepository : IImageImportMetadataReposito
 
         var result = new ImageImportMetadata
         {
-            ImageName = reader["ImageName"]?.ToString() ?? string.Empty,
-            LegacyPath = reader["LegacyPath"] == DBNull.Value ? null : reader["LegacyPath"]?.ToString(),
-            FolderPath = reader["FolderPath"] == DBNull.Value ? null : reader["FolderPath"]?.ToString(),
-            HierarchyClassification = reader["Hierarchy_Classification"]?.ToString() ?? string.Empty,
-            SectionIdentifier = reader["Section_Identifier"]?.ToString() ?? string.Empty
+            ImageName = reader["ImageName"].ToString() ?? string.Empty,
+            LegacyPath = reader["LegacyPath"] == DBNull.Value ? null : reader["LegacyPath"].ToString(),
+            FolderPath = reader["FolderPath"] == DBNull.Value ? null : reader["FolderPath"].ToString(),
+            HierarchyClassification = reader["Hierarchy_Classification"].ToString() ?? string.Empty,
+            SectionIdentifier = reader["Section_Identifier"].ToString() ?? string.Empty
         };
 
         _logger.LogInformation(

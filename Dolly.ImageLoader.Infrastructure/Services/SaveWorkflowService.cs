@@ -39,19 +39,24 @@ public sealed class SaveWorkflowService : ISaveWorkflowService
         _logger = logger;
     }
 
-    public async Task<SaveSessionResult> ExecuteAsync(SaveRequest request, CancellationToken cancellationToken)
+    public Task<SaveSessionResult> ExecuteAsync(SaveRequest request, CancellationToken cancellationToken)
+        => ExecuteBatchAsync([request], cancellationToken);
+
+    public async Task<SaveSessionResult> ExecuteBatchAsync(IReadOnlyList<SaveRequest> requests, CancellationToken ct)
     {
-        var workingFolder = await _imageFileService.CreateWorkingFolderAsync(cancellationToken);
+        var workingFolder = await _imageFileService.CreateWorkingFolderAsync(ct);
         var metadataRecords = new List<MetadataRecord>();
         var stagedFiles = new List<string>();
 
         try
         {
-            var changedSlots = request.Slots
-                .Where(x => x.PendingAction != PendingActionType.None)
+            var work = requests
+                .Select(r => (Request: r,
+                    ChangedSlots: r.Slots.Where(x => x.PendingAction != PendingActionType.None).ToList()))
+                .Where(x => x.ChangedSlots.Count > 0)
                 .ToList();
 
-            if (changedSlots.Count == 0)
+            if (work.Count == 0)
             {
                 return new SaveSessionResult
                 {
@@ -60,57 +65,49 @@ public sealed class SaveWorkflowService : ISaveWorkflowService
                     WorkingFolderPath = workingFolder
                 };
             }
-
-            var targetId = request.ProductContext.ProductId;
             
-            /*var targetId = request.TargetMode == TargetMode.Product
-                ? request.ProductContext.ProductId
-                : request.ProductContext.ParentGroupId;*/
-
-            var importMetadata = await _imageImportMetadataRepository.GetByTargetIdAsync(targetId, cancellationToken);
-            if (importMetadata is null)
+            var importMetadataByTarget = new Dictionary<string, ImageImportMetadata>();
+            foreach (var (request, changedSlots) in work)
             {
-                return new SaveSessionResult
+                var targetId = request.ProductContext.ProductId;
+
+                var importMetaData = await _imageImportMetadataRepository.GetByTargetIdAsync(targetId, ct);
+
+                // metadata is null
+                if (importMetaData is null)
+                    return Fail($"Could not retrieve image import metadata for target '{targetId}'.");
+                // empty image name
+                if (string.IsNullOrWhiteSpace(importMetaData.ImageName))
+                    return Fail($"fn_ImagePath returned an empty ImageName for target '{{targetId}}'.");
+                // empty classification
+                if (string.IsNullOrWhiteSpace(importMetaData.HierarchyClassification))
+                    return Fail(
+                        $"fn_ImagePath returned an empty Hierarchy Classification for target '{{targetId}}'.");
+                // empty section identifier
+                if (string.IsNullOrWhiteSpace(importMetaData.SectionIdentifier))
+                    return Fail($"fn_ImagePath returned an empty Section Identifier for target '{{targetId}}'.");
+
+                importMetadataByTarget[targetId] = importMetaData;
+
+                foreach (var slot in changedSlots.Where(s => s.PendingAction != PendingActionType.Clear 
+                                                             && !string.IsNullOrWhiteSpace(s.PendingSourceFilePath)))
                 {
-                    Success = false,
-                    Message = $"Could not retrieve image import metadata for target '{targetId}'.",
-                    WorkingFolderPath = workingFolder
-                };
+                    var validation = await _imageProcessingService.ValidateImageAsync(
+                        slot.PendingSourceFilePath!, ct);
+                    if (!validation.IsValid)
+                        return Fail(
+                            $"Image validation failed for {targetId} / {slot.Definition.DisplayLabel}: {validation.Message}");
+                }
             }
 
-            if (string.IsNullOrWhiteSpace(importMetadata.ImageName))
+            foreach (var (request, changedSlots) in work)
             {
-                return new SaveSessionResult
-                {
-                    Success = false,
-                    Message = $"fn_ImagePath returned an empty ImageName for target '{targetId}'.",
-                    WorkingFolderPath = workingFolder
-                };
-            }
+                var targetId = request.ProductContext.ProductId;
+                var importMetadata = importMetadataByTarget[targetId];
 
-            if (string.IsNullOrWhiteSpace(importMetadata.HierarchyClassification))
-            {
-                return new SaveSessionResult
+                foreach (var slot in changedSlots)
                 {
-                    Success = false,
-                    Message = $"fn_ImagePath returned an empty Hierarchy_Classification for target '{targetId}'.",
-                    WorkingFolderPath = workingFolder
-                };
-            }
-
-            if (string.IsNullOrWhiteSpace(importMetadata.SectionIdentifier))
-            {
-                return new SaveSessionResult
-                {
-                    Success = false,
-                    Message = $"fn_ImagePath returned an empty Section_Identifier for target '{targetId}'.",
-                    WorkingFolderPath = workingFolder
-                };
-            }
-
-            foreach (var slot in changedSlots)
-            {
-                var plan = _assetNamingService.BuildPlan(
+                    var plan = _assetNamingService.BuildPlan(
                     request.ProductContext,
                     request.TargetMode,
                     slot.Definition,
@@ -127,7 +124,7 @@ public sealed class SaveWorkflowService : ISaveWorkflowService
                         imageNameToUnlink,
                         slot.Definition.ReferenceType,
                         request.Username,
-                        cancellationToken);
+                        ct);
 
                     if (slot.Definition.SupportsCutOut)
                     {
@@ -140,7 +137,7 @@ public sealed class SaveWorkflowService : ISaveWorkflowService
                                 cutOutToUnlink,
                                 "Primary_Cut_Out",
                                 request.Username,
-                                cancellationToken);
+                                ct);
                         }
                         else if (!string.IsNullOrWhiteSpace(plan.CutOutAssetName))
                         {
@@ -149,7 +146,7 @@ public sealed class SaveWorkflowService : ISaveWorkflowService
                                 plan.CutOutAssetName,
                                 "Primary_Cut_Out",
                                 request.Username,
-                                cancellationToken);
+                                ct);
                         }
                     }
 
@@ -161,7 +158,7 @@ public sealed class SaveWorkflowService : ISaveWorkflowService
                     continue;
                 }
 
-                var validation = await _imageProcessingService.ValidateImageAsync(slot.PendingSourceFilePath, cancellationToken);
+                var validation = await _imageProcessingService.ValidateImageAsync(slot.PendingSourceFilePath, ct);
                 if (!validation.IsValid)
                 {
                     return new SaveSessionResult
@@ -178,7 +175,7 @@ public sealed class SaveWorkflowService : ISaveWorkflowService
                         slot.PendingSourceFilePath,
                         workingFolder,
                         outputFileName,
-                        cancellationToken);
+                        ct);
 
                     stagedFiles.Add(stagedPath);
                 }
@@ -188,7 +185,7 @@ public sealed class SaveWorkflowService : ISaveWorkflowService
                     plan.PrimaryAssetName,
                     slot.Definition.ReferenceType,
                     request.Username,
-                    cancellationToken);
+                    ct);
 
                 metadataRecords.Add(new MetadataRecord
                 {
@@ -205,7 +202,7 @@ public sealed class SaveWorkflowService : ISaveWorkflowService
                         plan.CutOutAssetName,
                         "Primary_Cut_Out",
                         request.Username,
-                        cancellationToken);
+                        ct);
 
                     metadataRecords.Add(new MetadataRecord
                     {
@@ -224,34 +221,37 @@ public sealed class SaveWorkflowService : ISaveWorkflowService
                 await _amazonImageService.WriteImagesAsync(
                     slot.PendingSourceFilePath,
                     amazonPlan,
-                    cancellationToken);
+                    ct);
+                }
             }
 
-            var metadataCsvPath = await _metadataService.ExportMetadataCsvAsync(metadataRecords, workingFolder, cancellationToken);
+            var metadataCsvPath = await _metadataService.ExportMetadataCsvAsync(metadataRecords, workingFolder, ct);
             stagedFiles.Add(metadataCsvPath);
 
-            var zipFileName = $"{importMetadata.SectionIdentifier}{DateTime.Now:ddMMyyyyHHmmss}.zip";
-            var zipPath = await _packageService.CreateZipAsync(workingFolder, zipFileName, stagedFiles, cancellationToken);
-            await _packageService.CopyToHotfolderAsync(zipPath, cancellationToken);
+            var sectionIdentifier = importMetadataByTarget.Values.First().SectionIdentifier;
+            var zipFileName = $"{sectionIdentifier}{DateTime.Now:ddMMyyyyHHmmss}.zip";
+            var zipPath = await _packageService.CreateZipAsync(workingFolder, zipFileName, stagedFiles, ct);
+            await _packageService.CopyToHotfolderAsync(zipPath, ct);
 
             return new SaveSessionResult
             {
                 Success = true,
-                Message = "Changes saved successfully.",
+                Message = $"Saved {work.Count} target(s) in one package.",
                 WorkingFolderPath = workingFolder,
                 ZipFilePath = zipPath
             };
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Save workflow failed.");
-
-            return new SaveSessionResult
-            {
-                Success = false,
-                Message = $"Save workflow failed: {ex.Message}",
-                WorkingFolderPath = workingFolder
-            };
+            _logger.LogError(ex, "Batch save workflow failed.");
+            return Fail($"Save workflow failed: {ex.Message}");
         }
+
+        SaveSessionResult Fail(string msg) => new()
+        {
+            Success = false,
+            Message = msg,
+            WorkingFolderPath = workingFolder
+        };
     }
 }

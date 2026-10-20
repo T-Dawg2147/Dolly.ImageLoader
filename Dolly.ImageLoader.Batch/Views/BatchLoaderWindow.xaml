@@ -90,9 +90,9 @@
         <!-- Main -->
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="245" />
+                <ColumnDefinition Width="220" />
                 <ColumnDefinition Width="8" />
-                <ColumnDefinition Width="810" />
+                <ColumnDefinition Width="865" />
                 <ColumnDefinition Width="8" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
@@ -214,7 +214,7 @@
                     <Grid Grid.Row="2">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="285" />
-                            <ColumnDefinition Width="8" />
+                            <ColumnDefinition Width="0" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
 
@@ -246,7 +246,7 @@
 
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate DataType="{x:Type sharedViewModels:ImageSlotViewModel}">
-                                    <Border Margin="2"
+                                    <Border Margin="-6"
                                             BorderThickness="2"
                                             BorderBrush="Transparent"
                                             CornerRadius="6"
@@ -406,38 +406,6 @@
             </Grid>
         </Border>
 
-        <!-- Busy overlay -->
-        <Border Grid.RowSpan="5"
-                Background="#66FFFFFF"
-                Visibility="{Binding IsInteractionLocked, Converter={StaticResource BooleanToVisibilityConverter}}"
-                Panel.ZIndex="100">
-            <Grid>
-                <Border Width="320"
-                        Padding="16"
-                        CornerRadius="8"
-                        Background="White"
-                        BorderBrush="#D9D9D9"
-                        BorderThickness="1"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center">
-                    <StackPanel>
-                        <TextBlock Text="Working..."
-                                   FontSize="16"
-                                   FontWeight="SemiBold"
-                                   Foreground="#222222"
-                                   HorizontalAlignment="Center" />
-
-                        <TextBlock Margin="0,8,0,10"
-                                   Text="{Binding StatusMessage}"
-                                   TextAlignment="Center"
-                                   TextWrapping="Wrap"
-                                   Foreground="DimGray" />
-
-                        <ProgressBar Height="14"
-                                     IsIndeterminate="True" />
-                    </StackPanel>
-                </Border>
-            </Grid>
-        </Border>
+        
     </Grid>
 </Window>
