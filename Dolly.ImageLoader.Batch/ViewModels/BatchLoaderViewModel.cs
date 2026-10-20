@@ -214,6 +214,39 @@ public partial class BatchLoaderViewModel : ObservableObject
                 return;
             }
 
+            // Try the group's own row first (may be missing or have no Base_Code).
+            var groupProduct = await _productRepository.GetByIdAsync(groupId, CancellationToken.None);
+
+            var groupBaseCode = groupProduct?.BaseCode?.Trim();
+
+            // Fall back to the children's BaseCode (the most common non-empty one).
+            if (string.IsNullOrWhiteSpace(groupBaseCode))
+            {
+                var childBaseCodes = products
+                    .Select(p => p.BaseCode?.Trim())
+                    .Where(c => !string.IsNullOrWhiteSpace(c))
+                    .GroupBy(c => c!, StringComparer.OrdinalIgnoreCase)
+                    .OrderByDescending(g => g.Count())
+                    .ToList();
+
+                groupBaseCode = childBaseCodes.FirstOrDefault()?.Key ?? string.Empty;
+
+                if (childBaseCodes.Count > 1)
+                {
+                    _logger.LogWarning(
+                        "Group {GroupId} children have {Count} different BaseCodes ({Codes}); using '{Chosen}'.",
+                        groupId,
+                        childBaseCodes.Count,
+                        string.Join(", ", childBaseCodes.Select(g => g.Key)),
+                        groupBaseCode);
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(groupBaseCode))
+            {
+                _logger.LogWarning("Group {GroupId} has no BaseCode on the group or its children.", groupId);
+            }
+
             var root = new BatchProductNodeViewModel
             {
                 Title = groupId,
@@ -221,10 +254,10 @@ public partial class BatchLoaderViewModel : ObservableObject
                 Product = new ProductContext
                 {
                     ProductId = groupId,
-                    ProductName = groupId,
+                    ProductName = groupProduct?.ProductName ?? groupId,
                     ParentGroupId = string.Empty,
-                    BaseCode = string.Empty,
-                    SupplierProductCode = string.Empty
+                    BaseCode = groupBaseCode ?? string.Empty,
+                    SupplierProductCode = groupProduct?.SupplierProductCode ?? string.Empty
                 }
             };
 
@@ -1005,30 +1038,39 @@ public partial class BatchLoaderViewModel : ObservableObject
 
     #region Preview Image Loading
 
+    /// <summary>
+    /// Resolves the preview image for a slot:
+    /// 1. Local PreviewImageRoot (products only, and only if there is an asset name and the file exists).
+    /// 2. Amazon S3 fallback URL (ALWAYS attempted, even if there is no asset name in the database).
+    ///    - Products use their ProductId.
+    ///    - Groups use their BaseCode (group images on AWS are not saved under the PGRP_ id).
+    /// </summary>
     private string? BuildPreviewImagePath(
         ProductContext product,
         TargetMode targetMode,
         ImageSlotDefinition definition,
         string? assetName)
     {
-        if (string.IsNullOrWhiteSpace(assetName))
+        if (targetMode != TargetMode.Group && !string.IsNullOrWhiteSpace(assetName))
         {
-            return null;
+            var localPath = BuildLocalPreviewImagePath(assetName);
+            if (!string.IsNullOrWhiteSpace(localPath))
+                return localPath;
         }
-
-        var localPath = BuildLocalPreviewImagePath(assetName);
-        if (!string.IsNullOrWhiteSpace(localPath))
-            return localPath;
 
         return BuildFallbackPreviewUrl(product, targetMode, definition);
     }
 
     private string? BuildLocalPreviewImagePath(string assetName)
     {
-        var root = Environment.ExpandEnvironmentVariables(_pathOptions.PreviewImageRoot);
-        var localPath = Path.Combine(root, $"{assetName}.jpg");
-
-        return File.Exists(localPath) ? localPath : null;
+        try
+        {
+            var root = Environment.ExpandEnvironmentVariables(_pathOptions.PreviewImageRoot);
+            if (string.IsNullOrWhiteSpace(root)) return null;
+            var fullPath = Path.Combine(root, $"{assetName}.jpg");
+            return File.Exists(fullPath) ? fullPath : null;
+        }
+        catch (Exception) { return null; }
     }
 
     private string? BuildFallbackPreviewUrl(
@@ -1036,22 +1078,67 @@ public partial class BatchLoaderViewModel : ObservableObject
         TargetMode targetMode,
         ImageSlotDefinition definition)
     {
-        var keyStem = ResolveFallbackPreviewKeyStem(product, targetMode);
-        if (string.IsNullOrWhiteSpace(keyStem))
+        var code = ResolveFallbackPreviewKeyStem(product, targetMode);
+        if (string.IsNullOrWhiteSpace(code))
             return null;
 
-        var baseUrl = definition.Kind == ImageSlotKind.Primary
-            ? _pathOptions.FallbackPreviewPrimaryBaseUrl
-            : _pathOptions.FallbackPreviewAltBaseUrl;
+        if (definition.Kind == ImageSlotKind.Primary)
+        {
+            return BuildAmazonPreviewUrl(code, isPrimary: true);
+        }
 
-        if (string.IsNullOrWhiteSpace(baseUrl))
-            return null;
-
-        var fileName = BuildFallbackPreviewFileName(definition, keyStem);
-
-        return $"{baseUrl.TrimEnd('/')}/{fileName}";
+        var slotNumber = ResolveSecondarySlotNumber(definition);
+        return slotNumber is null
+            ? null
+            : BuildAmazonPreviewUrl(code, isPrimary: false, slotNumber);
     }
 
+    /// <summary>
+    /// Builds the Amazon S3 preview URL from a product / base code.
+    /// AWS file names are all lower case, so the code is lower-cased.
+    /// Primary:   {FallbackPreviewPrimaryBaseUrl}/{code}.jpg     e.g. http://slingsby.s3.amazonaws.com/p/l/440145.jpg
+    /// Secondary: {FallbackPreviewAltBaseUrl}/{code}_{n}.jpg     e.g. http://slingsby.s3.amazonaws.com/p/alt/l/440145_1.jpg
+    /// </summary>
+    private string? BuildAmazonPreviewUrl(string? code, bool isPrimary, int? secondarySlotNumber = null)
+    {
+        if (string.IsNullOrWhiteSpace(code))
+            return null;
+
+        code = code.Trim().ToLowerInvariant();
+
+        if (isPrimary)
+        {
+            var primaryBase = _pathOptions.FallbackPreviewPrimaryBaseUrl;
+            return string.IsNullOrWhiteSpace(primaryBase)
+                ? null
+                : $"{primaryBase.TrimEnd('/')}/{code}.jpg";
+        }
+
+        if (secondarySlotNumber is not > 0)
+            return null;
+
+        var altBase = _pathOptions.FallbackPreviewAltBaseUrl;
+        return string.IsNullOrWhiteSpace(altBase)
+            ? null
+            : $"{altBase.TrimEnd('/')}/{code}_{secondarySlotNumber}.jpg";
+    }
+
+    /// <summary>
+    /// Secondary slot number (1-based) = position of this slot among the secondary definitions.
+    /// </summary>
+    private static int? ResolveSecondarySlotNumber(ImageSlotDefinition definition)
+    {
+        var secondaries = ImageSlotDefinitions.All
+            .Where(x => x.Kind == ImageSlotKind.Secondary)
+            .ToList();
+
+        var index = secondaries.FindIndex(x => x.ReferenceType == definition.ReferenceType);
+        return index >= 0 ? index + 1 : null;
+    }
+
+    /// <summary>
+    /// Groups -> BaseCode. Products -> ProductId.
+    /// </summary>
     private static string? ResolveFallbackPreviewKeyStem(ProductContext product, TargetMode targetMode)
     {
         if (targetMode == TargetMode.Group)
@@ -1062,14 +1149,6 @@ public partial class BatchLoaderViewModel : ObservableObject
         return string.IsNullOrWhiteSpace(product.ProductId)
             ? null
             : product.ProductId;
-    }
-
-    private static string BuildFallbackPreviewFileName(ImageSlotDefinition definition, string keyStem)
-    {
-        if (definition.Kind == ImageSlotKind.Primary)
-            return $"{keyStem}.jpg";
-
-        return $"{keyStem}_{definition.ReferenceType}.jpg";
     }
 
     #endregion
